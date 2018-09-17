@@ -1,0 +1,18 @@
+
+# Create a new package for parsing the IEEE SISO Enumerations XML file.
+[package]
+name = "Enums"
+version = "1.0.0"
+authors = ["Kevin Walther"]
+
+# Add in the XML dependencies.
+[dependencies]
+serde_derive = "1.0"
+serde = "1.0"
+serde-xml-rs = "0.2.1"
+
+# Specify the target to build.
+[[bin]]
+name = "rust_example"
+path = "./rust_example.rs"
+
