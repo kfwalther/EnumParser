@@ -13,6 +13,6 @@ serde-xml-rs = "0.2.1"
 
 # Specify the target to build.
 [[bin]]
-name = "rust_example"
-path = "./rust_example.rs"
+name = "main"
+path = "./main.rs"
 
