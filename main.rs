@@ -15,7 +15,7 @@ use std::io::prelude::*;
 #[derive(Deserialize, Debug)]
 struct EnumeratedDataTypes {
 	#[serde(rename = "EnumeratedData", default)]
-	EnumeratedDataList: Vec<EnumeratedData>,
+	enumerated_data_list: Vec<EnumeratedData>,
 }
 
 // Define a struct to hold an enumeration and its contents.
@@ -38,7 +38,7 @@ struct Enumerator {
 fn write_enumerations_hla13(output_file_name: String, siso_enumerated_data: EnumeratedDataTypes) -> Result<(), std::io::Error> {
 	let mut output_file = std::fs::File::create(output_file_name).expect("Error creating the output file!");
 	// Loop through all the EnumeratedData elements.
-	for cur_enum_data in siso_enumerated_data.EnumeratedDataList {
+	for cur_enum_data in siso_enumerated_data.enumerated_data_list {
 		// Print the metadata for the current EnumeratedData element.
 		output_file.write_all(format!(r#"{}(EnumeratedDataType (Name "{}"){}"#, "\t", cur_enum_data.name, "\n").as_bytes())?;
 		output_file.write_all(format!(r#"{}(Description "{}"){}"#, "\t\t", cur_enum_data.semantics, "\n").as_bytes())?;
