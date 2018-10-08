@@ -36,7 +36,8 @@ Orlando, FL 32878-1238, USA
 <xsl:stylesheet 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
     xmlns:siso="http://www.sisostds.org/schemas/SISO-REF-010/2.4"
-    version="1.0">
+	xmlns:func="http://www.sisostds.org/functions"
+    version="2.0">
 
   <!-- <xsl:import href="extensions.xsl"/> -->
   <xsl:output method="text" encoding="utf-8" media-type="text/plain"/>
@@ -59,6 +60,11 @@ Orlando, FL 32878-1238, USA
     <xsl:text>#endif /* SISO_REF_010_H */&#xA;</xsl:text>
   </xsl:template>
 
+  <xsl:function name="func:captializeString">
+	<xsl:param name="unformattedString"/>
+    <xsl:value-of select="translate($unformattedString, ' !&quot;#$%&amp;()*+,-./:;&lt;=&gt;?@[\]^`abcdefghijklmnopqrstuvwxyz{|}~', 
+		'___________________________ABCDEFGHIJKLMNOPQRSTUVWXYZ____')"/>
+  </xsl:function>
 
 <!--
   Define a template to match each Complex Entity Type (CET) element in the SISO-REF-010 XML file.
@@ -85,7 +91,7 @@ Orlando, FL 32878-1238, USA
 -->
   <xsl:template match="siso:category">
     <xsl:text>    namespace </xsl:text>
-    <xsl:value-of select="@description"/>
+    <xsl:value-of select="func:captializeString(@description)"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:apply-templates select="siso:subcategory"/>
 
@@ -96,7 +102,7 @@ Orlando, FL 32878-1238, USA
 -->
   <xsl:template match="siso:subcategory">
     <xsl:text>      namespace </xsl:text>
-    <xsl:value-of select="@description"/>
+    <xsl:value-of select="func:captializeString(@description)"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:text>      List Entity Type ENUMS &#xA;</xsl:text>
     <xsl:apply-templates select="siso:specific"/>
@@ -108,7 +114,7 @@ Orlando, FL 32878-1238, USA
 -->
   <xsl:template match="siso:specific">
     <xsl:text>        namespace </xsl:text>
-    <xsl:value-of select="@description"/>
+    <xsl:value-of select="func:captializeString(@description)"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:text>        List Entity Type ENUMS &#xA;</xsl:text>
     <xsl:apply-templates select="siso:extra"/>
@@ -120,20 +126,19 @@ Orlando, FL 32878-1238, USA
 -->
   <xsl:template match="siso:extra">
     <xsl:text>          namespace </xsl:text>
-    <xsl:value-of select="@description"/>
+    <xsl:value-of select="func:captializeString(@description)"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:text>          List Entity Type ENUMS &#xA;</xsl:text>
 
     <xsl:text>          }&#xA;</xsl:text>
   </xsl:template>
-
+	
 <!--
   Define a template to match each enum element in the XML file.
 -->
   <xsl:template match="siso:enum">
     <xsl:text>enum </xsl:text>
-    <xsl:value-of select="translate(@name, ' !&quot;#$%&amp;()*+,-./:;&lt;=&gt;?@[\]^`abcdefghijklmnopqrstuvwxyz{|}~', 
-        '___________________________ABCDEFGHIJKLMNOPQRSTUVWXYZ____')"/>
+    <xsl:value-of select="func:captializeString(@name)"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:apply-templates select="siso:enumrow"/>
     <xsl:text>};&#xA;</xsl:text>
@@ -144,9 +149,9 @@ Orlando, FL 32878-1238, USA
 -->
   <xsl:template match="siso:enumrow">
     <xsl:text>    </xsl:text>
+	<!-- TODO: Account for cases in which enumrom::description is empty, use "meta" instead. See "Emitter Name". -->
     <!-- Define a variable to store the capitalized name with all special characters removed, except apostrophes. -->
-    <xsl:variable name="cleaned_name" select="translate(@description, ' !&quot;#$%&amp;()*+,-./:;&lt;=&gt;?@[\]^`abcdefghijklmnopqrstuvwxyz{|}~', 
-        '___________________________ABCDEFGHIJKLMNOPQRSTUVWXYZ____')"/>
+    <xsl:variable name="cleaned_name" select="func:captializeString(@description)"/>
     <!-- Remove quotes then apply the formatted name to the template. -->
     <xsl:value-of select='translate($cleaned_name, "&apos;", "")'/>
     <xsl:text> = </xsl:text>
