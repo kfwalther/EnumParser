@@ -259,7 +259,18 @@ Orlando, FL 32878-1238, USA
     <xsl:text>    </xsl:text>
 	<!-- TODO: Account for cases in which enumrom::description is empty, use "meta" instead. See "Emitter Name". -->
     <!-- Define a variable to store the capitalized name with all special characters removed, except apostrophes. -->
-    <xsl:variable name="cleaned_name" select="func:captializeString(@description)"/>
+    <xsl:variable name="emptyString"/>
+	<xsl:variable name="enumRowName">
+	  <xsl:choose>
+		<xsl:when test="(@description = '') or (@description = ' ')">
+		  <xsl:value-of select="./siso:meta/@value"/>
+		</xsl:when>
+		<xsl:otherwise>
+		  <xsl:value-of select="@description"/>
+		</xsl:otherwise>
+	  </xsl:choose>
+	</xsl:variable>
+	<xsl:variable name="cleaned_name" select="func:captializeString($enumRowName)"/>
     <!-- Remove quotes then apply the formatted name to the template. -->
     <xsl:value-of select='translate($cleaned_name, "&apos;", "")'/>
     <xsl:text> = </xsl:text>
