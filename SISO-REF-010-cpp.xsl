@@ -54,24 +54,10 @@ Orlando, FL 32878-1238, USA
     <xsl:text>#define SISO_REF_010_H&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
     <xsl:text>/*! Loop through all the enums in the file. */&#xA;</xsl:text>
-    <xsl:apply-templates match="enum|cet"/>
+    <xsl:apply-templates select="siso:enum|siso:cet"/>
     <xsl:text>&#xA;</xsl:text>
     <xsl:text>#endif /* SISO_REF_010_H */&#xA;</xsl:text>
   </xsl:template>
-
-
-
-
-
-Try one big for-loop (nested for each case)
-
-
-
-
-
-
-
-
 
 
 <!--
@@ -79,7 +65,7 @@ Try one big for-loop (nested for each case)
 -->
   <xsl:template match="siso:cet">
     <xsl:text>namespace EntityType {&#xA;</xsl:text>
-    <xsl:apply-templates match="entity"/>
+    <xsl:apply-templates select="siso:entity"/>
 
     <xsl:text>}&#xA;</xsl:text>
   </xsl:template>
@@ -89,12 +75,8 @@ Try one big for-loop (nested for each case)
   <xsl:template match="siso:entity">
     <xsl:text>  namespace </xsl:text>
     <xsl:value-of select="concat(@kind, '_', @domain, '_', @country)"/>
-<!--     <xsl:variable name="kindNum" select="@kind" />
- -->    
     <xsl:text> {&#xA;</xsl:text>
-    <xsl:call-templates match="category">
-      <xsl:with-param name="kindNum" select="@kind"/>
-    </xsl:call-templates>
+    <xsl:apply-templates select="siso:category"/>
     <xsl:text>  }&#xA;</xsl:text>
   </xsl:template>
 
@@ -102,13 +84,10 @@ Try one big for-loop (nested for each case)
   Define a template to match each 'category' in the XML file.
 -->
   <xsl:template match="siso:category">
-    <xsl:param name="kindNum"/>
     <xsl:text>    namespace </xsl:text>
-    <xsl:text>    Kind = </xsl:text>
-    <xsl:value-of select="$kindNum" />
     <xsl:value-of select="@description"/>
     <xsl:text> {&#xA;</xsl:text>
-    <xsl:apply-templates match="subcategory"/>
+    <xsl:apply-templates select="siso:subcategory"/>
 
     <xsl:text>    }&#xA;</xsl:text>
   </xsl:template>
@@ -120,7 +99,7 @@ Try one big for-loop (nested for each case)
     <xsl:value-of select="@description"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:text>      List Entity Type ENUMS &#xA;</xsl:text>
-    <xsl:apply-templates match="specific"/>
+    <xsl:apply-templates select="siso:specific"/>
 
     <xsl:text>      }&#xA;</xsl:text>
   </xsl:template>
@@ -132,7 +111,7 @@ Try one big for-loop (nested for each case)
     <xsl:value-of select="@description"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:text>        List Entity Type ENUMS &#xA;</xsl:text>
-    <xsl:apply-templates match="extra"/>
+    <xsl:apply-templates select="siso:extra"/>
 
     <xsl:text>        }&#xA;</xsl:text>
   </xsl:template>
@@ -156,7 +135,7 @@ Try one big for-loop (nested for each case)
     <xsl:value-of select="translate(@name, ' !&quot;#$%&amp;()*+,-./:;&lt;=&gt;?@[\]^`abcdefghijklmnopqrstuvwxyz{|}~', 
         '___________________________ABCDEFGHIJKLMNOPQRSTUVWXYZ____')"/>
     <xsl:text> {&#xA;</xsl:text>
-    <xsl:apply-templates match="enumrow"/>
+    <xsl:apply-templates select="siso:enumrow"/>
     <xsl:text>};&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
   </xsl:template>
