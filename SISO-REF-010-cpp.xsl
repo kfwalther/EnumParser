@@ -74,6 +74,7 @@ Orlando, FL 32878-1238, USA
   <!-- Define a function to print the list of EntityType values in an enum definition. -->
   <xsl:function name="func:listEntityTypeEnums">
 	<xsl:param name="enumName"/>
+	<xsl:param name="namespacedEnumName"/>
 	<xsl:param name="kind"/>
 	<xsl:param name="domain"/>
 	<xsl:param name="country"/>
@@ -81,6 +82,10 @@ Orlando, FL 32878-1238, USA
 	<xsl:param name="subcategory"/>
 	<xsl:param name="specific"/>
 	<xsl:param name="extra"/>
+	<!-- Print a comment listing the namespace for the enumeration. -->
+	<xsl:text>        /** </xsl:text>
+	<xsl:value-of select="$namespacedEnumName"/>
+	<xsl:text>_E */&#xA;</xsl:text>
 	<xsl:text>        enum </xsl:text>
 	<xsl:value-of select="$enumName"/>
 	<!-- Append an "_E" after the enumeration name. -->
@@ -115,10 +120,13 @@ Orlando, FL 32878-1238, USA
   Define a template to match each 'entity' (or Kind, Domain, Country) combination in the XML file.
 -->
   <xsl:template match="siso:entity">
+	<xsl:variable name="kindDomainCountryVal" select="concat(@kind, '_', @domain, '_', @country)"/>
     <xsl:text>  namespace </xsl:text>
-    <xsl:value-of select="concat(@kind, '_', @domain, '_', @country)"/>
+    <xsl:value-of select="$kindDomainCountryVal"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:apply-templates select="siso:category">
+	  <xsl:with-param name="namespaceString" 
+		  select="concat('SISO::EntityTypes::', $kindDomainCountryVal)" tunnel="yes"/>
 	  <xsl:with-param name="kindNum" select="@kind" tunnel="yes"/>
 	  <xsl:with-param name="domainNum" select="@domain" tunnel="yes"/>
 	  <xsl:with-param name="countryNum" select="@country" tunnel="yes"/>
@@ -130,13 +138,17 @@ Orlando, FL 32878-1238, USA
   Define a template to match each 'category' in the XML file.
 -->
   <xsl:template match="siso:category">
+    <xsl:param name="namespaceString" tunnel="yes"/>
     <xsl:param name="kindNum" tunnel="yes"/>
     <xsl:param name="domainNum" tunnel="yes"/>
     <xsl:param name="countryNum" tunnel="yes"/>
+	<xsl:variable name="curCategoryName" select="func:captializeString(@description)"/>
     <xsl:text>    namespace </xsl:text>
-    <xsl:value-of select="func:captializeString(@description)"/>
+    <xsl:value-of select="$curCategoryName"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:apply-templates select="siso:subcategory">
+	  <xsl:with-param name="namespaceString" 
+		  select="concat($namespaceString, '::', $curCategoryName)" tunnel="yes"/>	
 	  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
 	  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
 	  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
@@ -149,17 +161,26 @@ Orlando, FL 32878-1238, USA
   Define a template to match each 'subcategory' in the XML file.
 -->
   <xsl:template match="siso:subcategory">
+    <xsl:param name="namespaceString" tunnel="yes"/>
     <xsl:param name="kindNum" tunnel="yes"/>
     <xsl:param name="domainNum" tunnel="yes"/>
     <xsl:param name="countryNum" tunnel="yes"/>
     <xsl:param name="categoryNum" tunnel="yes"/>
+	<!-- Get the subcategory name. -->
 	<xsl:variable name="curSubcategoryName" select="func:captializeString(@description)"/>
+	<!-- Get the fully-namespaced subcategory name. -->
+	<xsl:variable name="namespacedSubcategoryName" 
+		select="concat($namespaceString, '::', $curSubcategoryName)"/>
     <xsl:text>      namespace </xsl:text>
     <xsl:value-of select="$curSubcategoryName"/>
     <xsl:text> {&#xA;</xsl:text>
-	<xsl:value-of select="func:listEntityTypeEnums(
-		$curSubcategoryName, $kindNum, $domainNum, $countryNum, $categoryNum, @value, 0, 0)"/>
+	<!-- Print the EntityType enums for this subcategory. -->
+	<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, 
+	    concat($namespacedSubcategoryName, '::', $curSubcategoryName), 
+		$kindNum, $domainNum, $countryNum, $categoryNum, @value, 0, 0)"/>
     <xsl:apply-templates select="siso:specific">
+	  <xsl:with-param name="namespaceString" 
+		  select="$namespacedSubcategoryName" tunnel="yes"/>		
 	  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
 	  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
 	  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
@@ -173,14 +194,23 @@ Orlando, FL 32878-1238, USA
   Define a template to match each 'specific' in the XML file.
 -->
   <xsl:template match="siso:specific">
+    <xsl:param name="namespaceString" tunnel="yes"/>
     <xsl:param name="kindNum" tunnel="yes"/>
     <xsl:param name="domainNum" tunnel="yes"/>
     <xsl:param name="countryNum" tunnel="yes"/>
     <xsl:param name="categoryNum" tunnel="yes"/>
     <xsl:param name="subcategoryNum" tunnel="yes"/>
-	<xsl:value-of select="func:listEntityTypeEnums(func:captializeString(@description), 
+	<!-- Get the specific name. -->
+	<xsl:variable name="curSpecificName" select="func:captializeString(@description)"/>
+	<!-- Get the fully-namespaced specific name. -->
+	<xsl:variable name="namespacedSpecificName" 
+		select="concat($namespaceString, '::', $curSpecificName)"/>
+	<!-- Print the EntityType enums for this specific. -->
+	<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, $namespacedSpecificName,
 		$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, @value, 0)"/>
     <xsl:apply-templates select="siso:extra">
+	  <xsl:with-param name="namespaceString" 
+		  select="$namespacedSpecificName" tunnel="yes"/>
 	  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
 	  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
 	  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
@@ -194,13 +224,19 @@ Orlando, FL 32878-1238, USA
   Define a template to match each 'extra' in the XML file.
 -->
   <xsl:template match="siso:extra">
+    <xsl:param name="namespaceString" tunnel="yes"/>
     <xsl:param name="kindNum" tunnel="yes"/>
     <xsl:param name="domainNum" tunnel="yes"/>
     <xsl:param name="countryNum" tunnel="yes"/>
     <xsl:param name="categoryNum" tunnel="yes"/>
     <xsl:param name="subcategoryNum" tunnel="yes"/>  
     <xsl:param name="specificNum" tunnel="yes"/>  
-	<xsl:value-of select="func:listEntityTypeEnums(func:captializeString(@description), 
+	<!-- Get the extra name. -->
+	<xsl:variable name="curExtraName" select="func:captializeString(@description)"/>
+	<!-- Get the fully-namespaced extra name. -->
+	<xsl:variable name="namespacedExtraName" 
+		select="concat($namespaceString, '::', $curExtraName)"/>	
+	<xsl:value-of select="func:listEntityTypeEnums($curExtraName, $namespacedExtraName, 
 		$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, $specificNum, @value)"/>
   </xsl:template>
 	
