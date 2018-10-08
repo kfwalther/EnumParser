@@ -44,11 +44,11 @@ Orlando, FL 32878-1238, USA
 
   <xsl:template match="siso:ebv">
     <xsl:text>/**&#xA;</xsl:text>
-    <xsl:text> * \file    siso-ref-010.h&#xA;</xsl:text>
-    <xsl:text> * \brief   </xsl:text><xsl:value-of select="@description"/><xsl:text>&#xA;</xsl:text>
-    <xsl:text> * \version </xsl:text><xsl:value-of select="@title"/><xsl:text> - </xsl:text><xsl:value-of select="@release"/><xsl:text>&#xA;</xsl:text>
-    <xsl:text> * \date    </xsl:text><xsl:value-of select="@date"/><xsl:text>&#xA;</xsl:text>
-    <xsl:text> * \author  </xsl:text><xsl:value-of select="@organization"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @file    SisoEnums.h&#xA;</xsl:text>
+    <xsl:text> * @brief   </xsl:text><xsl:value-of select="@description"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @version </xsl:text><xsl:value-of select="@title"/><xsl:text> - </xsl:text><xsl:value-of select="@release"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @date    </xsl:text><xsl:value-of select="@date"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @author  </xsl:text><xsl:value-of select="@organization"/><xsl:text>&#xA;</xsl:text>
     <xsl:text> */&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
     <xsl:text>#ifndef SISO_REF_010_H&#xA;</xsl:text>
@@ -111,8 +111,13 @@ Orlando, FL 32878-1238, USA
   Define a template to match each Complex Entity Type (CET) element in the SISO-REF-010 XML file.
 -->
   <xsl:template match="siso:cet">
-    <xsl:text>namespace EntityTypes {&#xA;</xsl:text>
-    <xsl:apply-templates select="siso:entity"/>
+    <xsl:text>namespace </xsl:text>
+	<xsl:value-of select="func:captializeString(@name)"/>
+	<xsl:text> {&#xA;</xsl:text>
+    <xsl:apply-templates select="siso:entity">
+	<xsl:with-param name="namespaceString" 
+		  select="concat('SISO::', func:captializeString(@name))" tunnel="yes"/>
+	</xsl:apply-templates>
     <xsl:text>}&#xA;</xsl:text>
   </xsl:template>
   
@@ -120,13 +125,14 @@ Orlando, FL 32878-1238, USA
   Define a template to match each 'entity' (or Kind, Domain, Country) combination in the XML file.
 -->
   <xsl:template match="siso:entity">
+    <xsl:param name="namespaceString" tunnel="yes"/>
 	<xsl:variable name="kindDomainCountryVal" select="concat(@kind, '_', @domain, '_', @country)"/>
     <xsl:text>  namespace </xsl:text>
     <xsl:value-of select="$kindDomainCountryVal"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:apply-templates select="siso:category">
 	  <xsl:with-param name="namespaceString" 
-		  select="concat('SISO::EntityTypes::', $kindDomainCountryVal)" tunnel="yes"/>
+		  select="concat($namespaceString, '::', $kindDomainCountryVal)" tunnel="yes"/>
 	  <xsl:with-param name="kindNum" select="@kind" tunnel="yes"/>
 	  <xsl:with-param name="domainNum" select="@domain" tunnel="yes"/>
 	  <xsl:with-param name="countryNum" select="@country" tunnel="yes"/>
@@ -143,18 +149,30 @@ Orlando, FL 32878-1238, USA
     <xsl:param name="domainNum" tunnel="yes"/>
     <xsl:param name="countryNum" tunnel="yes"/>
 	<xsl:variable name="curCategoryName" select="func:captializeString(@description)"/>
-    <xsl:text>    namespace </xsl:text>
-    <xsl:value-of select="$curCategoryName"/>
-    <xsl:text> {&#xA;</xsl:text>
-    <xsl:apply-templates select="siso:subcategory">
-	  <xsl:with-param name="namespaceString" 
-		  select="concat($namespaceString, '::', $curCategoryName)" tunnel="yes"/>	
-	  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
-	  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
-	  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
-	  <xsl:with-param name="categoryNum" select="@value" tunnel="yes"/>
-	</xsl:apply-templates>
-    <xsl:text>    }&#xA;</xsl:text>
+	<!-- Choose to apply-templates for EntityTypes, otherwise print enums. -->
+	<xsl:choose>
+	  <!-- Just print the enumerations in AGGREGATE_STATE_AGGREGATE_TYPES case. -->
+	  <xsl:when test="$namespaceString = 'SISO::AGGREGATE_STATE_AGGREGATE_TYPES::1_1_225'">
+		<xsl:value-of select="func:listEntityTypeEnums($curCategoryName, 
+			concat($namespaceString, '::', $curCategoryName), 
+			$kindNum, $domainNum, $countryNum, @value, 0, 0, 0)"/>
+	  </xsl:when>
+	  <xsl:otherwise>
+	    <!-- Apply templates again for EntityTypes, to get subcategories. -->
+		<xsl:text>    namespace </xsl:text>
+		<xsl:value-of select="$curCategoryName"/>
+		<xsl:text> {&#xA;</xsl:text>	  
+		<xsl:apply-templates select="siso:subcategory">
+		  <xsl:with-param name="namespaceString" 
+			  select="concat($namespaceString, '::', $curCategoryName)" tunnel="yes"/>	
+		  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
+		  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
+		  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
+		  <xsl:with-param name="categoryNum" select="@value" tunnel="yes"/>
+		</xsl:apply-templates>
+		<xsl:text>    }&#xA;</xsl:text>
+	  </xsl:otherwise>
+	</xsl:choose>
   </xsl:template>
   
 <!--
@@ -257,9 +275,7 @@ Orlando, FL 32878-1238, USA
 -->
   <xsl:template match="siso:enumrow">
     <xsl:text>    </xsl:text>
-	<!-- TODO: Account for cases in which enumrom::description is empty, use "meta" instead. See "Emitter Name". -->
-    <!-- Define a variable to store the capitalized name with all special characters removed, except apostrophes. -->
-    <xsl:variable name="emptyString"/>
+	<!-- Define the variable based on the value of "description". -->
 	<xsl:variable name="enumRowName">
 	  <xsl:choose>
 		<xsl:when test="(@description = '') or (@description = ' ')">
@@ -270,6 +286,7 @@ Orlando, FL 32878-1238, USA
 		</xsl:otherwise>
 	  </xsl:choose>
 	</xsl:variable>
+    <!-- Define a variable to store the capitalized name with all special characters removed, except apostrophes. -->
 	<xsl:variable name="cleaned_name" select="func:captializeString($enumRowName)"/>
     <!-- Remove quotes then apply the formatted name to the template. -->
     <xsl:value-of select='translate($cleaned_name, "&apos;", "")'/>
