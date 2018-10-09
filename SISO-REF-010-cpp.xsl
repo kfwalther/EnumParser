@@ -1,45 +1,19 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2011, 2013, 2018 by the Simulation Interoperability Standards Organization, Inc.
+"Reprinted with permission from SISO Inc."
 
-P.O. Box 781238
-Orlando, FL 32878-1238, USA
-All rights reserved.
-
-Schema and API: SISO hereby grants a general, royalty-free license to copy, distribute, display, and
-make derivative works from this material, for all purposes, provided that any use of the material
-contains the following attribution: Reprinted with permission from SISO Inc. Should
-a reader require additional information, contact the SISO Inc. Board of Directors.
-
-Documentation: SISO hereby grants a general, royalty-free license to copy, distribute,
-display, and make derivative works from this material, for noncommercial purposes, provided that
-any use of the material contains the following attribution: Reprinted with permission from SISO Inc. The material may not be used for a commercial purpose without express written
-permission from the SISO Inc Board of Directors.
-
-SISO Inc. Board of Directors
-P.O. Box 781238
-Orlando, FL 32878-1238, USA
-
-  @file siso-ref-010-cpp.xsl
+  @file SISO-REF-010-cpp.xsl
   Transform EBV-MR XML data file into C++ Header (.h) file
-  v2.0 12 Apr 2018
-  unpdated by David Ronnfeldt <david.ronnfeldt2@defence.gov.au>
-  @author Peter Ross <peter.ross@dsto.defence.gov.au>
-
+  v2.1 09 Oct 2018
+  updated by Kevin Walther
 -->
-<!-- <xsl:stylesheet 
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-    xmlns:siso="http://www.sisostds.org/schemas/SISO-REF-010/2.4"
-    xmlns:func="https://www.w3schools.com/func"
-    extension-element-prefixes="func"
-    version="1.0"> -->
+
 <xsl:stylesheet 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
     xmlns:siso="http://www.sisostds.org/schemas/SISO-REF-010/2.4"
 	xmlns:func="http://www.sisostds.org/functions"
     version="2.0">
 
-  <!-- <xsl:import href="extensions.xsl"/> -->
   <xsl:output method="text" encoding="utf-8" media-type="text/plain"/>
 
   <xsl:template match="siso:ebv">
@@ -51,24 +25,38 @@ Orlando, FL 32878-1238, USA
     <xsl:text> * @author  </xsl:text><xsl:value-of select="@organization"/><xsl:text>&#xA;</xsl:text>
     <xsl:text> */&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
-    <xsl:text>#ifndef SISO_REF_010_H&#xA;</xsl:text>
-    <xsl:text>#define SISO_REF_010_H&#xA;</xsl:text>
+    <xsl:text>#ifndef SISOENUMS_H&#xA;</xsl:text>
+    <xsl:text>#define SISOENUMS_H&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
-    <xsl:text>/** Define an top-level SISO namespace. */&#xA;</xsl:text>
+    <xsl:text>/** Define a top-level SISO namespace. */&#xA;</xsl:text>
     <xsl:text>namespace SISO {&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
     <xsl:apply-templates select="siso:enum|siso:cet"/>
     <xsl:text>&#xA;</xsl:text>
     <xsl:text>} /** End SISO namespace */&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
-    <xsl:text>#endif /* SISO_REF_010_H */&#xA;</xsl:text>
+    <xsl:text>#endif /* SISOENUMS_H */&#xA;</xsl:text>
   </xsl:template>
 
   <!-- Define a function to capitalize and remove special characters from a string. -->
   <xsl:function name="func:captializeString">
 	<xsl:param name="unformattedString"/>
-    <xsl:value-of select="translate($unformattedString, ' !&quot;#$%&amp;()*+,-./:;&lt;=&gt;?@[\]^`abcdefghijklmnopqrstuvwxyz{|}~', 
-		'___________________________ABCDEFGHIJKLMNOPQRSTUVWXYZ____')"/>
+    <!-- Define a variable to store the capitalized name with all special characters removed, except apostrophes. -->
+    <xsl:variable name="formattedString1" select="translate($unformattedString, ' !&quot;#$%&amp;()*+,-./:;&lt;=&gt;?@[\]^`abcdefghijklmnopqrstuvwxyz{|}~’–', 
+		'___________________________ABCDEFGHIJKLMNOPQRSTUVWXYZ______')"/>
+    <!-- Remove apostrophes. -->
+    <xsl:variable name="formattedString2" select='translate($formattedString1, "&apos;", "")'/>
+	<!-- Prepend an underscore if the name begins with a numeric character. -->
+	<xsl:value-of>
+	  <xsl:choose>
+		<xsl:when test="contains('0123456789', substring($formattedString2,1,1))">
+		  <xsl:value-of select="concat('_', $formattedString2)"/>
+		</xsl:when>
+		<xsl:otherwise>
+		  <xsl:value-of select="$formattedString2"/>
+		</xsl:otherwise>
+	  </xsl:choose>
+	</xsl:value-of>
   </xsl:function>
   
   <!-- Define a function to print the list of EntityType values in an enum definition. -->
@@ -84,25 +72,25 @@ Orlando, FL 32878-1238, USA
 	<xsl:param name="extra"/>
 	<!-- Print a comment listing the namespace for the enumeration. -->
 	<xsl:text>        /** </xsl:text>
-	<xsl:value-of select="$namespacedEnumName"/>
+	<xsl:value-of select="concat($namespacedEnumName, '::', $enumName)"/>
 	<xsl:text>_E */&#xA;</xsl:text>
-	<xsl:text>        enum </xsl:text>
+	<xsl:text>        enum class </xsl:text>
 	<xsl:value-of select="$enumName"/>
 	<!-- Append an "_E" after the enumeration name. -->
 	<xsl:text>_E {&#xA;</xsl:text>
 	<xsl:text>          KIND = </xsl:text>
 	<xsl:value-of select="$kind"/>
-	<xsl:text>&#xA;          DOMAIN = </xsl:text>
+	<xsl:text>,&#xA;          DOMAIN = </xsl:text>
 	<xsl:value-of select="$domain"/>
-	<xsl:text>&#xA;          COUNTRY = </xsl:text>
+	<xsl:text>,&#xA;          COUNTRY = </xsl:text>
 	<xsl:value-of select="$country"/>
-	<xsl:text>&#xA;          CATEGORY = </xsl:text>
+	<xsl:text>,&#xA;          CATEGORY = </xsl:text>
 	<xsl:value-of select="$category"/>
-	<xsl:text>&#xA;          SUBCATEGORY = </xsl:text>
+	<xsl:text>,&#xA;          SUBCATEGORY = </xsl:text>
 	<xsl:value-of select="$subcategory"/>
-	<xsl:text>&#xA;          SPECIFIC = </xsl:text>
+	<xsl:text>,&#xA;          SPECIFIC = </xsl:text>
 	<xsl:value-of select="$specific"/>
-	<xsl:text>&#xA;          EXTRA = </xsl:text>
+	<xsl:text>,&#xA;          EXTRA = </xsl:text>
 	<xsl:value-of select="$extra"/>
 	<xsl:text>&#xA;        };&#xA;</xsl:text>
   </xsl:function> 
@@ -126,7 +114,7 @@ Orlando, FL 32878-1238, USA
 -->
   <xsl:template match="siso:entity">
     <xsl:param name="namespaceString" tunnel="yes"/>
-	<xsl:variable name="kindDomainCountryVal" select="concat(@kind, '_', @domain, '_', @country)"/>
+	<xsl:variable name="kindDomainCountryVal" select="concat('_', @kind, '_', @domain, '_', @country)"/>
     <xsl:text>  namespace </xsl:text>
     <xsl:value-of select="$kindDomainCountryVal"/>
     <xsl:text> {&#xA;</xsl:text>
@@ -193,8 +181,7 @@ Orlando, FL 32878-1238, USA
     <xsl:value-of select="$curSubcategoryName"/>
     <xsl:text> {&#xA;</xsl:text>
 	<!-- Print the EntityType enums for this subcategory. -->
-	<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, 
-	    concat($namespacedSubcategoryName, '::', $curSubcategoryName), 
+	<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, $namespacedSubcategoryName, 
 		$kindNum, $domainNum, $countryNum, $categoryNum, @value, 0, 0)"/>
     <xsl:apply-templates select="siso:specific">
 	  <xsl:with-param name="namespaceString" 
@@ -223,6 +210,9 @@ Orlando, FL 32878-1238, USA
 	<!-- Get the fully-namespaced specific name. -->
 	<xsl:variable name="namespacedSpecificName" 
 		select="concat($namespaceString, '::', $curSpecificName)"/>
+    <xsl:text>        namespace </xsl:text>
+    <xsl:value-of select="$curSpecificName"/>
+    <xsl:text> {&#xA;</xsl:text>
 	<!-- Print the EntityType enums for this specific. -->
 	<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, $namespacedSpecificName,
 		$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, @value, 0)"/>
@@ -236,6 +226,7 @@ Orlando, FL 32878-1238, USA
 	  <xsl:with-param name="subcategoryNum" select="$subcategoryNum" tunnel="yes"/>
 	  <xsl:with-param name="specificNum" select="@value" tunnel="yes"/>
 	</xsl:apply-templates>	  
+    <xsl:text>        }&#xA;</xsl:text>
   </xsl:template>
   
 <!--
@@ -262,7 +253,7 @@ Orlando, FL 32878-1238, USA
   Define a template to match each enum element in the XML file.
 -->
   <xsl:template match="siso:enum">
-    <xsl:text>enum </xsl:text>
+    <xsl:text>enum class </xsl:text>
     <xsl:value-of select="func:captializeString(@name)"/>
     <xsl:text> {&#xA;</xsl:text>
     <xsl:apply-templates select="siso:enumrow"/>
@@ -286,10 +277,7 @@ Orlando, FL 32878-1238, USA
 		</xsl:otherwise>
 	  </xsl:choose>
 	</xsl:variable>
-    <!-- Define a variable to store the capitalized name with all special characters removed, except apostrophes. -->
-	<xsl:variable name="cleaned_name" select="func:captializeString($enumRowName)"/>
-    <!-- Remove quotes then apply the formatted name to the template. -->
-    <xsl:value-of select='translate($cleaned_name, "&apos;", "")'/>
+    <xsl:value-of select="func:captializeString($enumRowName)"/>
     <xsl:text> = </xsl:text>
     <xsl:value-of select="@value"/>
     <xsl:if test="position()!=last()">
