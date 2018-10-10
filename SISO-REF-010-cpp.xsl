@@ -63,6 +63,7 @@
   <!-- Define a function to print the list of EntityType values in an enum definition. -->
   <xsl:function name="func:listEntityTypeEnums">
 	<xsl:param name="enumName"/>
+	<xsl:param name="textDescription"/>
 	<xsl:param name="namespacedEnumName"/>
 	<xsl:param name="kind"/>
 	<xsl:param name="domain"/>
@@ -71,29 +72,32 @@
 	<xsl:param name="subcategory"/>
 	<xsl:param name="specific"/>
 	<xsl:param name="extra"/>
-	<!-- Print a comment listing the namespace for the enumeration. -->
-	<xsl:text>        /** </xsl:text>
+	<!-- Print a comments listing the description and full namespace for the enumeration. -->
+	<xsl:text>          /** @brief: </xsl:text>
+	<xsl:value-of select="$textDescription"/>
+	<xsl:text> */&#xA;</xsl:text>
+	<xsl:text>          /** @namespace: </xsl:text>
 	<xsl:value-of select="concat($namespacedEnumName, '::', $enumName)"/>
 	<xsl:text>_E */&#xA;</xsl:text>
-	<xsl:text>        enum class </xsl:text>
+	<xsl:text>          enum class </xsl:text>
 	<xsl:value-of select="$enumName"/>
 	<!-- Append an "_E" after the enumeration name. -->
 	<xsl:text>_E {&#xA;</xsl:text>
-	<xsl:text>          KIND = </xsl:text>
+	<xsl:text>            KIND = </xsl:text>
 	<xsl:value-of select="$kind"/>
-	<xsl:text>,&#xA;          DOMAIN = </xsl:text>
+	<xsl:text>,&#xA;            DOMAIN = </xsl:text>
 	<xsl:value-of select="$domain"/>
-	<xsl:text>,&#xA;          COUNTRY = </xsl:text>
+	<xsl:text>,&#xA;            COUNTRY = </xsl:text>
 	<xsl:value-of select="$country"/>
-	<xsl:text>,&#xA;          CATEGORY = </xsl:text>
+	<xsl:text>,&#xA;            CATEGORY = </xsl:text>
 	<xsl:value-of select="$category"/>
-	<xsl:text>,&#xA;          SUBCATEGORY = </xsl:text>
+	<xsl:text>,&#xA;            SUBCATEGORY = </xsl:text>
 	<xsl:value-of select="$subcategory"/>
-	<xsl:text>,&#xA;          SPECIFIC = </xsl:text>
+	<xsl:text>,&#xA;            SPECIFIC = </xsl:text>
 	<xsl:value-of select="$specific"/>
-	<xsl:text>,&#xA;          EXTRA = </xsl:text>
+	<xsl:text>,&#xA;            EXTRA = </xsl:text>
 	<xsl:value-of select="$extra"/>
-	<xsl:text>&#xA;        };&#xA;</xsl:text>
+	<xsl:text>&#xA;          };&#xA;</xsl:text>
   </xsl:function> 
   
   <!-- Define a function to check for enumeration we need to rename (b/c they are used twice). -->
@@ -161,7 +165,7 @@
 	<xsl:choose>
 	  <!-- Just print the enumerations in AGGREGATE_STATE_AGGREGATE_TYPES case. -->
 	  <xsl:when test="$namespaceString = 'SISO::AGGREGATE_STATE_AGGREGATE_TYPES::1_1_225'">
-		<xsl:value-of select="func:listEntityTypeEnums($curCategoryName, 
+		<xsl:value-of select="func:listEntityTypeEnums($curCategoryName, @description,
 			concat($namespaceString, '::', $curCategoryName), 
 			$kindNum, $domainNum, $countryNum, @value, 0, 0, 0)"/>
 	  </xsl:when>
@@ -215,11 +219,10 @@
 		</xsl:if>
 		<xsl:text> {&#xA;</xsl:text>
 		<!-- Print the EntityType enums for this subcategory. -->
-		<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, $namespacedSubcategoryName, 
-			$kindNum, $domainNum, $countryNum, $categoryNum, @value, 0, 0)"/>
+		<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, @description, 
+			$namespacedSubcategoryName, $kindNum, $domainNum, $countryNum, $categoryNum, @value, 0, 0)"/>
 		<xsl:apply-templates select="siso:specific">
-		  <xsl:with-param name="namespaceString" 
-			  select="$namespacedSubcategoryName" tunnel="yes"/>		
+		  <xsl:with-param name="namespaceString" select="$namespacedSubcategoryName" tunnel="yes"/>		
 	      <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
 	      <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
 	      <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
@@ -250,8 +253,7 @@
 	  </xsl:when>
 	  <xsl:otherwise>	
 		<!-- Get the fully-namespaced specific name. -->
-		<xsl:variable name="namespacedSpecificName" 
-			select="concat($namespaceString, '::', $curSpecificName)"/>
+		<xsl:variable name="namespacedSpecificName" select="$namespaceString"/>
 		<xsl:text>        namespace </xsl:text>
 		<xsl:value-of select="$curSpecificName"/>
 		<!-- Check for repeated subcategories in same namespace. -->
@@ -260,11 +262,10 @@
 		</xsl:if>		
 		<xsl:text> {&#xA;</xsl:text>
 		<!-- Print the EntityType enums for this specific. -->
-		<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, $namespacedSpecificName,
-			$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, @value, 0)"/>
+		<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, @description, 
+			$namespacedSpecificName, $kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, @value, 0)"/>
 		<xsl:apply-templates select="siso:extra">
-		  <xsl:with-param name="namespaceString" 
-			  select="$namespacedSpecificName" tunnel="yes"/>
+		  <xsl:with-param name="namespaceString" select="$namespacedSpecificName" tunnel="yes"/>
 		  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
 		  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
 		  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
@@ -295,11 +296,10 @@
 	  <xsl:when test="($curExtraName = '_DEPRECATED_') or ($curExtraName = 'AGM_114K_SAL')">
 		<!-- DO NOTHING -->
 	  </xsl:when>
-	  <xsl:otherwise>	
+	  <xsl:otherwise>
 		<!-- Get the fully-namespaced extra name. -->
-		<xsl:variable name="namespacedExtraName" 
-			select="concat($namespaceString, '::', $curExtraName)"/>	
-		<xsl:value-of select="func:listEntityTypeEnums($curExtraName, $namespacedExtraName, 
+		<xsl:variable name="namespacedExtraName" select="concat($namespaceString, '::', $curExtraName)"/>	
+		<xsl:value-of select="func:listEntityTypeEnums($curExtraName, @description, $namespacedExtraName, 
 			$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, $specificNum, @value)"/>
 	  </xsl:otherwise>	
 	</xsl:choose>
