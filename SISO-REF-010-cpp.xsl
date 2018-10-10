@@ -253,13 +253,14 @@
 	  </xsl:when>
 	  <xsl:otherwise>	
 		<!-- Get the fully-namespaced specific name. -->
-		<xsl:variable name="namespacedSpecificName" select="$namespaceString"/>
+		<xsl:variable name="namespacedSpecificName"
+			select="concat($namespaceString, '::', $curSpecificName)"/>
 		<xsl:text>        namespace </xsl:text>
 		<xsl:value-of select="$curSpecificName"/>
 		<!-- Check for repeated subcategories in same namespace. -->
 		<xsl:if test="(($curSpecificName = 'M830A1_HEAT_MP_T') and (@value = '11'))">
 		  <xsl:text>_</xsl:text>
-		</xsl:if>		
+		</xsl:if>
 		<xsl:text> {&#xA;</xsl:text>
 		<!-- Print the EntityType enums for this specific. -->
 		<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, @description, 
@@ -298,8 +299,7 @@
 	  </xsl:when>
 	  <xsl:otherwise>
 		<!-- Get the fully-namespaced extra name. -->
-		<xsl:variable name="namespacedExtraName" select="concat($namespaceString, '::', $curExtraName)"/>	
-		<xsl:value-of select="func:listEntityTypeEnums($curExtraName, @description, $namespacedExtraName, 
+		<xsl:value-of select="func:listEntityTypeEnums($curExtraName, @description, $namespaceString, 
 			$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, $specificNum, @value)"/>
 	  </xsl:otherwise>	
 	</xsl:choose>
