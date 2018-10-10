@@ -209,6 +209,10 @@
 			select="concat($namespaceString, '::', $curSubcategoryName)"/>
 		<xsl:text>      namespace </xsl:text>
 		<xsl:value-of select="$curSubcategoryName"/>
+		<!-- Check for repeated subcategories in same namespace. -->
+		<xsl:if test="(($curSubcategoryName = 'LINDAU_CLASS__TYPE_320_') and (@value = '2'))">
+		  <xsl:text>_</xsl:text>
+		</xsl:if>
 		<xsl:text> {&#xA;</xsl:text>
 		<!-- Print the EntityType enums for this subcategory. -->
 		<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, $namespacedSubcategoryName, 
@@ -250,6 +254,10 @@
 			select="concat($namespaceString, '::', $curSpecificName)"/>
 		<xsl:text>        namespace </xsl:text>
 		<xsl:value-of select="$curSpecificName"/>
+		<!-- Check for repeated subcategories in same namespace. -->
+		<xsl:if test="(($curSpecificName = 'M830A1_HEAT_MP_T') and (@value = '11'))">
+		  <xsl:text>_</xsl:text>
+		</xsl:if>		
 		<xsl:text> {&#xA;</xsl:text>
 		<!-- Print the EntityType enums for this specific. -->
 		<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, $namespacedSpecificName,
@@ -284,7 +292,7 @@
 	<xsl:variable name="curExtraName" select="func:captializeString(@description)"/>
 	<xsl:choose>
 	  <!-- Check for useless enums, such as "deprecated". -->
-	  <xsl:when test="$curExtraName = '_DEPRECATED_'">
+	  <xsl:when test="($curExtraName = '_DEPRECATED_') or ($curExtraName = 'AGM_114K_SAL')">
 		<!-- DO NOTHING -->
 	  </xsl:when>
 	  <xsl:otherwise>	
