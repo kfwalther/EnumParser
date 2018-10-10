@@ -9,7 +9,7 @@
 #include "SisoEnums.h"
 
 int main(int numArguments, char const * const arguments[]) {
-	SISO::ENTITY_TYPES::1_3_225::GUIDED_MISSILE_DESTROYER::ARLEIGH_BURKE_CLASS::DDG_51_ARLEIGH_BURKE::DDG_51_ARLEIGH_BURKE_E ArleighBurkeEnum;
+	auto ArleighBurkeEnum = SISO::ENTITY_TYPES::_1_3_225::GUIDED_MISSILE_DESTROYER::ARLEIGH_BURKE_CLASS::DDG_51_ARLEIGH_BURKE::DDG_51_ARLEIGH_BURKE_E;
 	unsigned int EntityTypeKind = ArleighBurkeEnum::KIND;
 	unsigned int EntityTypeDomain = ArleighBurkeEnum::DOMAIN;
 	unsigned int EntityTypeCountry = ArleighBurkeEnum::COUNTRY;

@@ -31,7 +31,8 @@
     <xsl:text>/** Define a top-level SISO namespace. */&#xA;</xsl:text>
     <xsl:text>namespace SISO {&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
-    <xsl:apply-templates select="siso:enum|siso:cet"/>
+    <!-- <xsl:apply-templates select="siso:enum|siso:cet"/> -->
+    <xsl:apply-templates select="siso:cet"/>
     <xsl:text>&#xA;</xsl:text>
     <xsl:text>} /** End SISO namespace */&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
@@ -95,6 +96,25 @@
 	<xsl:text>&#xA;        };&#xA;</xsl:text>
   </xsl:function> 
   
+  <!-- Define a function to check for enumeration we need to rename (b/c they are used twice). -->
+  <xsl:function name="func:renameEnum">  
+  	<xsl:param name="enumValue"/>
+	<xsl:value-of>
+	  <xsl:choose>
+		<xsl:when test="$enumValue = (2701, 2702, 2705, 2706, 2710, 2712, 2725,
+			1520, 8010, 9000, 11200, 12110, 12120, 12130, 12140, 12150, 12160, 12170, 12300, 23105,
+			24110, 24120, 24130, 24140, 24150, 24160, 24300, 30010, 31510)">
+		  <!-- Yes, rename this enumeration. -->
+		  <xsl:value-of select="1"/>
+		</xsl:when>
+		<xsl:otherwise>
+		  <!-- No, this enumeration name is unique. -->
+		  <xsl:value-of select="0"/>
+		</xsl:otherwise>
+	  </xsl:choose>
+	</xsl:value-of>
+  </xsl:function> 
+
 <!--
   Define a template to match each Complex Entity Type (CET) element in the SISO-REF-010 XML file.
 -->
@@ -145,6 +165,10 @@
 			concat($namespaceString, '::', $curCategoryName), 
 			$kindNum, $domainNum, $countryNum, @value, 0, 0, 0)"/>
 	  </xsl:when>
+	  <!-- Check for useless enums, such as "deprecated". -->
+	  <xsl:when test="$curCategoryName = '_DEPRECATED_'">
+		<!-- DO NOTHING -->
+	  </xsl:when>
 	  <xsl:otherwise>
 	    <!-- Apply templates again for EntityTypes, to get subcategories. -->
 		<xsl:text>    namespace </xsl:text>
@@ -174,25 +198,33 @@
     <xsl:param name="categoryNum" tunnel="yes"/>
 	<!-- Get the subcategory name. -->
 	<xsl:variable name="curSubcategoryName" select="func:captializeString(@description)"/>
-	<!-- Get the fully-namespaced subcategory name. -->
-	<xsl:variable name="namespacedSubcategoryName" 
-		select="concat($namespaceString, '::', $curSubcategoryName)"/>
-    <xsl:text>      namespace </xsl:text>
-    <xsl:value-of select="$curSubcategoryName"/>
-    <xsl:text> {&#xA;</xsl:text>
-	<!-- Print the EntityType enums for this subcategory. -->
-	<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, $namespacedSubcategoryName, 
-		$kindNum, $domainNum, $countryNum, $categoryNum, @value, 0, 0)"/>
-    <xsl:apply-templates select="siso:specific">
-	  <xsl:with-param name="namespaceString" 
-		  select="$namespacedSubcategoryName" tunnel="yes"/>		
-	  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
-	  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
-	  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
-	  <xsl:with-param name="categoryNum" select="$categoryNum" tunnel="yes"/>
-	  <xsl:with-param name="subcategoryNum" select="@value" tunnel="yes"/>
-	</xsl:apply-templates>	  
-    <xsl:text>      }&#xA;</xsl:text>
+	<xsl:choose>
+	  <!-- Check for useless enums, such as "deprecated". -->
+	  <xsl:when test="$curSubcategoryName = '_DEPRECATED_'">
+		<!-- DO NOTHING -->
+	  </xsl:when>
+	  <xsl:otherwise>
+		<!-- Get the fully-namespaced subcategory name. -->
+		<xsl:variable name="namespacedSubcategoryName" 
+			select="concat($namespaceString, '::', $curSubcategoryName)"/>
+		<xsl:text>      namespace </xsl:text>
+		<xsl:value-of select="$curSubcategoryName"/>
+		<xsl:text> {&#xA;</xsl:text>
+		<!-- Print the EntityType enums for this subcategory. -->
+		<xsl:value-of select="func:listEntityTypeEnums($curSubcategoryName, $namespacedSubcategoryName, 
+			$kindNum, $domainNum, $countryNum, $categoryNum, @value, 0, 0)"/>
+		<xsl:apply-templates select="siso:specific">
+		  <xsl:with-param name="namespaceString" 
+			  select="$namespacedSubcategoryName" tunnel="yes"/>		
+	      <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
+	      <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
+	      <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
+	      <xsl:with-param name="categoryNum" select="$categoryNum" tunnel="yes"/>
+	      <xsl:with-param name="subcategoryNum" select="@value" tunnel="yes"/>
+		</xsl:apply-templates>	  
+		<xsl:text>      }&#xA;</xsl:text>
+	  </xsl:otherwise>
+	</xsl:choose>
   </xsl:template>
   
 <!--
@@ -207,26 +239,34 @@
     <xsl:param name="subcategoryNum" tunnel="yes"/>
 	<!-- Get the specific name. -->
 	<xsl:variable name="curSpecificName" select="func:captializeString(@description)"/>
-	<!-- Get the fully-namespaced specific name. -->
-	<xsl:variable name="namespacedSpecificName" 
-		select="concat($namespaceString, '::', $curSpecificName)"/>
-    <xsl:text>        namespace </xsl:text>
-    <xsl:value-of select="$curSpecificName"/>
-    <xsl:text> {&#xA;</xsl:text>
-	<!-- Print the EntityType enums for this specific. -->
-	<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, $namespacedSpecificName,
-		$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, @value, 0)"/>
-    <xsl:apply-templates select="siso:extra">
-	  <xsl:with-param name="namespaceString" 
-		  select="$namespacedSpecificName" tunnel="yes"/>
-	  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
-	  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
-	  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
-	  <xsl:with-param name="categoryNum" select="$categoryNum" tunnel="yes"/>
-	  <xsl:with-param name="subcategoryNum" select="$subcategoryNum" tunnel="yes"/>
-	  <xsl:with-param name="specificNum" select="@value" tunnel="yes"/>
-	</xsl:apply-templates>	  
-    <xsl:text>        }&#xA;</xsl:text>
+	<xsl:choose>
+	  <!-- Check for useless enums, such as "deprecated". -->
+	  <xsl:when test="$curSpecificName = '_DEPRECATED_'">
+		<!-- DO NOTHING -->
+	  </xsl:when>
+	  <xsl:otherwise>	
+		<!-- Get the fully-namespaced specific name. -->
+		<xsl:variable name="namespacedSpecificName" 
+			select="concat($namespaceString, '::', $curSpecificName)"/>
+		<xsl:text>        namespace </xsl:text>
+		<xsl:value-of select="$curSpecificName"/>
+		<xsl:text> {&#xA;</xsl:text>
+		<!-- Print the EntityType enums for this specific. -->
+		<xsl:value-of select="func:listEntityTypeEnums($curSpecificName, $namespacedSpecificName,
+			$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, @value, 0)"/>
+		<xsl:apply-templates select="siso:extra">
+		  <xsl:with-param name="namespaceString" 
+			  select="$namespacedSpecificName" tunnel="yes"/>
+		  <xsl:with-param name="kindNum" select="$kindNum" tunnel="yes"/>
+		  <xsl:with-param name="domainNum" select="$domainNum" tunnel="yes"/>
+		  <xsl:with-param name="countryNum" select="$countryNum" tunnel="yes"/>	
+		  <xsl:with-param name="categoryNum" select="$categoryNum" tunnel="yes"/>
+		  <xsl:with-param name="subcategoryNum" select="$subcategoryNum" tunnel="yes"/>
+		  <xsl:with-param name="specificNum" select="@value" tunnel="yes"/>
+		</xsl:apply-templates>	  
+		<xsl:text>        }&#xA;</xsl:text>
+	  </xsl:otherwise>
+	</xsl:choose>		
   </xsl:template>
   
 <!--
@@ -242,11 +282,19 @@
     <xsl:param name="specificNum" tunnel="yes"/>  
 	<!-- Get the extra name. -->
 	<xsl:variable name="curExtraName" select="func:captializeString(@description)"/>
-	<!-- Get the fully-namespaced extra name. -->
-	<xsl:variable name="namespacedExtraName" 
-		select="concat($namespaceString, '::', $curExtraName)"/>	
-	<xsl:value-of select="func:listEntityTypeEnums($curExtraName, $namespacedExtraName, 
-		$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, $specificNum, @value)"/>
+	<xsl:choose>
+	  <!-- Check for useless enums, such as "deprecated". -->
+	  <xsl:when test="$curExtraName = '_DEPRECATED_'">
+		<!-- DO NOTHING -->
+	  </xsl:when>
+	  <xsl:otherwise>	
+		<!-- Get the fully-namespaced extra name. -->
+		<xsl:variable name="namespacedExtraName" 
+			select="concat($namespaceString, '::', $curExtraName)"/>	
+		<xsl:value-of select="func:listEntityTypeEnums($curExtraName, $namespacedExtraName, 
+			$kindNum, $domainNum, $countryNum, $categoryNum, $subcategoryNum, $specificNum, @value)"/>
+	  </xsl:otherwise>	
+	</xsl:choose>
   </xsl:template>
 	
 <!--
@@ -269,6 +317,7 @@
 	<!-- Define the variable based on the value of "description". -->
 	<xsl:variable name="enumRowName">
 	  <xsl:choose>
+		<!-- Make sure description is not an empty string. -->
 		<xsl:when test="(@description = '') or (@description = ' ')">
 		  <xsl:value-of select="./siso:meta/@value"/>
 		</xsl:when>
@@ -277,7 +326,11 @@
 		</xsl:otherwise>
 	  </xsl:choose>
 	</xsl:variable>
-    <xsl:value-of select="func:captializeString($enumRowName)"/>
+	<xsl:value-of select="func:captializeString($enumRowName)"/>
+	<!-- Test for any enumerations we have to rename, by appending an underscore. -->
+	<xsl:if test="func:renameEnum(@value) = '1'">
+	  <xsl:text>_</xsl:text>
+    </xsl:if>
     <xsl:text> = </xsl:text>
     <xsl:value-of select="@value"/>
     <xsl:if test="position()!=last()">
