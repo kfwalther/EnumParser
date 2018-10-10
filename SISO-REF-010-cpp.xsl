@@ -18,11 +18,11 @@
 
   <xsl:template match="siso:ebv">
     <xsl:text>/**&#xA;</xsl:text>
-    <xsl:text> * @file    SisoEnums.h&#xA;</xsl:text>
-    <xsl:text> * @brief   </xsl:text><xsl:value-of select="@description"/><xsl:text>&#xA;</xsl:text>
-    <xsl:text> * @version </xsl:text><xsl:value-of select="@title"/><xsl:text> - </xsl:text><xsl:value-of select="@release"/><xsl:text>&#xA;</xsl:text>
-    <xsl:text> * @date    </xsl:text><xsl:value-of select="@date"/><xsl:text>&#xA;</xsl:text>
-    <xsl:text> * @author  </xsl:text><xsl:value-of select="@organization"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @file:    SisoEnums.h&#xA;</xsl:text>
+    <xsl:text> * @brief:   </xsl:text><xsl:value-of select="@description"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @version: </xsl:text><xsl:value-of select="@title"/><xsl:text> - </xsl:text><xsl:value-of select="@release"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @date:    </xsl:text><xsl:value-of select="@date"/><xsl:text>&#xA;</xsl:text>
+    <xsl:text> * @author:  &lt;kevin.walther@nrl.navy.mil&gt;&#xA;</xsl:text>
     <xsl:text> */&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
     <xsl:text>#ifndef SISOENUMS_H&#xA;</xsl:text>
@@ -297,9 +297,11 @@
 		<!-- SKIP THIS ENUMERATION -->
 	  </xsl:when>
 	  <xsl:otherwise>
-		<xsl:text>enum class </xsl:text>
-		<xsl:value-of select="func:captializeString(@name)"/>
-		<xsl:text> {&#xA;</xsl:text>
+		<xsl:text>/**&#xA;</xsl:text>
+		<xsl:text> * @brief: </xsl:text><xsl:value-of select="@name"/><xsl:text>&#xA;</xsl:text>
+		<xsl:text> * @namespace: SISO::</xsl:text><xsl:value-of select="func:captializeString(@name)"/><xsl:text>&#xA;</xsl:text>
+		<xsl:text> */&#xA;</xsl:text>
+		<xsl:text>enum class </xsl:text><xsl:value-of select="func:captializeString(@name)"/><xsl:text> {&#xA;</xsl:text>
 		<xsl:apply-templates select="siso:enumrow"/>
 		<xsl:text>};&#xA;</xsl:text>
 		<xsl:text>&#xA;</xsl:text>
