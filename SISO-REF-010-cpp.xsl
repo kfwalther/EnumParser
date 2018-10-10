@@ -31,8 +31,7 @@
     <xsl:text>/** Define a top-level SISO namespace. */&#xA;</xsl:text>
     <xsl:text>namespace SISO {&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
-    <!-- <xsl:apply-templates select="siso:enum|siso:cet"/> -->
-    <xsl:apply-templates select="siso:cet"/>
+    <xsl:apply-templates select="siso:enum|siso:cet"/>
     <xsl:text>&#xA;</xsl:text>
     <xsl:text>} /** End SISO namespace */&#xA;</xsl:text>
     <xsl:text>&#xA;</xsl:text>
@@ -98,25 +97,6 @@
 	<xsl:text>,&#xA;            EXTRA = </xsl:text>
 	<xsl:value-of select="$extra"/>
 	<xsl:text>&#xA;          };&#xA;</xsl:text>
-  </xsl:function> 
-  
-  <!-- Define a function to check for enumeration we need to rename (b/c they are used twice). -->
-  <xsl:function name="func:renameEnum">  
-  	<xsl:param name="enumValue"/>
-	<xsl:value-of>
-	  <xsl:choose>
-		<xsl:when test="$enumValue = (2701, 2702, 2705, 2706, 2710, 2712, 2725,
-			1520, 8010, 9000, 11200, 12110, 12120, 12130, 12140, 12150, 12160, 12170, 12300, 23105,
-			24110, 24120, 24130, 24140, 24150, 24160, 24300, 30010, 31510)">
-		  <!-- Yes, rename this enumeration. -->
-		  <xsl:value-of select="1"/>
-		</xsl:when>
-		<xsl:otherwise>
-		  <!-- No, this enumeration name is unique. -->
-		  <xsl:value-of select="0"/>
-		</xsl:otherwise>
-	  </xsl:choose>
-	</xsl:value-of>
   </xsl:function> 
 
 <!--
@@ -309,12 +289,22 @@
   Define a template to match each enum element in the XML file.
 -->
   <xsl:template match="siso:enum">
-    <xsl:text>enum class </xsl:text>
-    <xsl:value-of select="func:captializeString(@name)"/>
-    <xsl:text> {&#xA;</xsl:text>
-    <xsl:apply-templates select="siso:enumrow"/>
-    <xsl:text>};&#xA;</xsl:text>
-    <xsl:text>&#xA;</xsl:text>
+	<xsl:variable name="formattedEnumName" select="func:captializeString(@name)"/>
+	<!-- Check if this enum has duplicate enumrow names, and should be skipped. -->
+	<xsl:choose>
+	  <xsl:when test="($formattedEnumName = ('LIFE_FORMS_SUBCATEGORY_U_S__WEAPONS', 'MUNITION_DESCRIPTOR_FUSE', 
+		  'VARIABLE_RECORD_TYPES', 'CAPABILITY_REPORT', 'REPAIR_COMPLETE_REPAIR', 'TRANSFER_CONTROL_TRANSFER_TYPE'))">
+		<!-- SKIP THIS ENUMERATION -->
+	  </xsl:when>
+	  <xsl:otherwise>
+		<xsl:text>enum class </xsl:text>
+		<xsl:value-of select="func:captializeString(@name)"/>
+		<xsl:text> {&#xA;</xsl:text>
+		<xsl:apply-templates select="siso:enumrow"/>
+		<xsl:text>};&#xA;</xsl:text>
+		<xsl:text>&#xA;</xsl:text>
+	  </xsl:otherwise>
+	</xsl:choose>
   </xsl:template>
   
 <!--
@@ -334,17 +324,27 @@
 		</xsl:otherwise>
 	  </xsl:choose>
 	</xsl:variable>
-	<xsl:value-of select="func:captializeString($enumRowName)"/>
-	<!-- Test for any enumerations we have to rename, by appending an underscore. -->
-	<xsl:if test="func:renameEnum(@value) = '1'">
-	  <xsl:text>_</xsl:text>
-    </xsl:if>
-    <xsl:text> = </xsl:text>
-    <xsl:value-of select="@value"/>
-    <xsl:if test="position()!=last()">
-      <xsl:text>,</xsl:text>
-    </xsl:if>
-    <xsl:text>&#xA;</xsl:text>
+	<!-- Test for any enumerations we want to skip (b/c they are used more than once). -->
+	<xsl:choose>
+	  <xsl:when test="((func:captializeString($enumRowName)) = ('RESERVED', 'NOT_USED', '_1L13_3__55G6_', 
+		  'AN_APN_215', 'IRL144M', 'SNOOP_PING', 'P_18', 'TYPE_208', 'TYPE_753', 'INSTRUMENTATION', 
+		  'ABBREVIATED_COMMAND_AND_CONTROL', '_UNAVAILABLE_FOR_USE_'))">
+		<!-- DO NOTHING -->
+	  </xsl:when>
+	  <xsl:otherwise>
+		<!-- Print the current enumrow info. -->
+		<xsl:value-of select="func:captializeString($enumRowName)"/>
+		<xsl:text> = </xsl:text>
+		<xsl:value-of select="@value"/>
+		<xsl:if test="position()!=last()">
+		  <xsl:text>,</xsl:text>
+		</xsl:if>
+		<xsl:text>&#xA;</xsl:text>	
+	  </xsl:otherwise>
+	</xsl:choose>
   </xsl:template>
+  
+  <!-- Define a default template to match any text -->
   <xsl:template match="text()"/>
+  
 </xsl:stylesheet>
